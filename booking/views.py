@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Movie, Session, Booking, CinemaHall
 from .forms import BookingForm
@@ -16,7 +17,6 @@ def index(request):
 
 def movie_detail(request, movie_id):
     movie = get_object_or_404(Movie, id=movie_id)
-
     other_movies = Movie.objects.exclude(id=movie.id)
     other_movies = list(other_movies)
     random.shuffle(other_movies)
@@ -70,58 +70,50 @@ def logout_view(request):
     return redirect('/')
 
 
-@login_required
-def buy_ticket(request, movie_id):
-    movie = get_object_or_404(Movie, id=movie_id)
-    sessions = Session.objects.filter(movie=movie)
-
-    if request.method == 'POST':
-        session_id = request.POST.get('session_id')
-        session = get_object_or_404(Session, id=session_id)
-
-        return redirect('confirmation')
-
-    context = {'movie': movie, 'sessions': sessions}
-    return render(request, 'buy_ticket.html', context)
-
-
-@login_required
-def book_ticket(request, movie_id):
-    movie = get_object_or_404(Movie, id=movie_id)
-
-    if request.method == 'POST':
-        form = BookingForm(request.POST)
-        if form.is_valid():
-            seats = form.cleaned_data['seats']
-            Booking.objects.create(user=request.user, movie=movie, seats=seats)
-            return redirect('profile')  # или куда-то ещё
-    else:
-        form = BookingForm()
-
-    context = {'form': form, 'movie': movie}
-    return render(request, 'book_ticket.html', context)
-
-
-from django.shortcuts import render
-from .models import Movie, Session
-
-
 def movie_schedule(request, movie_id):
-    movie = Movie.objects.get(id=movie_id)
+    movie = get_object_or_404(Movie, id=movie_id)
+    sessions = Session.objects.filter(movie=movie).select_related('hall').only(
+        'hall__name', 'hall__address', 'hall__metro_station', 'start_time'
+    )
+
+    schedules = [{
+        'cinema_name': session.hall.name,
+        'address': session.hall.address or "Адрес не указан",
+        'metro': session.hall.metro_station or "Метро не указано",
+        'showtimes': [session.start_time.strftime("%H:%M")],
+        'hall_id': session.hall.id
+    } for session in sessions]
+
+    return render(request, 'movie_schedule.html', {
+        'schedules': schedules,
+        'movie': movie
+    })
 
 
-    sessions = Session.objects.filter(movie=movie).select_related('hall')
+# views.py
+@require_http_methods(["POST"])
+def book_seats(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Требуется авторизация'})
 
-    schedules = []
-    for session in sessions:
-        schedules.append({
-            'cinema_name': session.hall.name,
-            'address': "Адрес кинотеатра",
-            'metro': "Станция метро",
-            'showtimes': [session.start_time.strftime("%H:%M")]
-        })
+    try:
+        data = json.loads(request.body)
+        seats = Seat.objects.filter(id__in=data['seats'], is_reserved=False)
 
-    return render(request, 'movie_schedule.html', {'schedules': schedules})
+        with transaction.atomic():
+            for seat in seats:
+                seat.is_reserved = True
+                seat.save()
+                Booking.objects.create(
+                    user=request.user,
+                    seat=seat,
+                    session=seat.session
+                )
+
+        return JsonResponse({'status': 'success'})
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
 
 
 def profile(request):

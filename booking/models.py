@@ -8,8 +8,12 @@ class Movie(models.Model):
     duration = models.PositiveIntegerField("Длительность (мин)")
     poster = models.ImageField("Постер", upload_to='posters/', blank=True, null=True)
     genres = models.CharField("Жанры", max_length=255)
-    actors = models.JSONField("Актёры", default=list, blank=True, null=True)
     rating = models.DecimalField("Рейтинг", max_digits=3, decimal_places=1, default=0.0)
+    country = models.CharField(max_length=100, default='Не указано', verbose_name='Страна')
+    studio = models.CharField(max_length=100, default='Студия не указана', verbose_name='Студия')
+    budget = models.PositiveIntegerField(default=0, verbose_name="Бюджет ($)", help_text="Укажите бюджет в долларах")
+    director = models.CharField(max_length=100, default='Режиссёр не указан', verbose_name='Режиссёр')
+    actor = models.CharField(max_length=100, default='Не указано', verbose_name='Актеры')
 
     class Meta:
         verbose_name = "Фильм"
@@ -19,12 +23,21 @@ class Movie(models.Model):
         return self.title
 
 
+class MovieFrame(models.Model):
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='frames')
+    image = models.ImageField(upload_to='movie_frames/')
+    caption = models.CharField(max_length=200, blank=True)
+
+    def __str__(self):
+        return f"Кадр из {self.movie.title}"
+
+
 class CinemaHall(models.Model):
     name = models.CharField("Название", max_length=100)
     rows = models.PositiveIntegerField("Рядов")
     seats_per_row = models.PositiveIntegerField("Мест в ряду")
     address = models.CharField("Адрес", max_length=255, blank=True, null=True)
-    metro = models.CharField("Метро", max_length=255, blank=True, null=True)
+    metro_station = models.CharField("Станция метро", max_length=100, blank=True, null=True)
 
     class Meta:
         verbose_name = "Кинозал"
@@ -73,6 +86,3 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"{self.user.username} забронировал {self.seat} в {self.booked_at.strftime('%d.%m.%Y %H:%M')}"
-
-
-

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Movie, CinemaHall, Session, Seat, Booking
+from .models import Movie, CinemaHall, Session, Seat, Booking, MovieFrame
 
 
 @admin.register(Movie)
@@ -30,3 +30,10 @@ class SeatAdmin(admin.ModelAdmin):
 class BookingAdmin(admin.ModelAdmin):
     list_display = ('user', 'seat', 'booked_at')
     list_filter = ('booked_at',)
+
+
+class MovieFrameInline(admin.TabularInline):
+    model = MovieFrame
+    extra = 3
+
+

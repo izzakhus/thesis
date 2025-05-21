@@ -5,46 +5,225 @@
     <title>Расписание кинотеатров</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #222;
+            margin-bottom: 30px;
         }
         .cinema {
-            border: 1px solid #ccc;
-            padding: 15px;
+            background-color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .cinema:hover {
+            transform: translateY(-3px);
+        }
+        .cinema h2 {
+            color: black;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #ffcc00;
+            padding-bottom: 5px;
+        }
+        .cinema-info {
+            display: flex;
             margin-bottom: 10px;
         }
+        .cinema-info p {
+            margin: 0 15px 0 0;
+            color: #555;
+        }
+        .cinema-info p i {
+            margin-right: 5px;
+            color: #ffcc00;
+        }
         .showtimes {
-            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
         }
         .time-button {
-            margin-right: 5px;
-            padding: 5px 10px;
-            background-color: #4CAF50;
-            color: white;
+            padding: 10px 15px;
+            background-color: #ffcc00;
+            color: #222;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
         }
+        .time-button:hover {
+            background-color: #e6b800;
+        }
+        .no-schedule {
+            text-align: center;
+            color: #777;
+            font-style: italic;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #777;
+            font-size: 14px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+        .modal-content {
+            position: relative;
+            background: white;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .seat-map {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .seat {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .seat.selected {
+            background: #ffcc00;
+            border-color: #ffcc00;
+        }
+
+        .seat.reserved {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
     </style>
 </head>
 <body>
-    <h1>Расписание</h1>
+    <div class="container">
+        <h1>🎬 Расписание сеансов</h1>
 
-    {% if schedules %}
-        {% for schedule in schedules %}
-            <div class="cinema">
-                <h2>{{ schedule.cinema_name }}</h2>
-                <p>{{ schedule.address }}</p>
-                <p>{{ schedule.metro }}</p>
-                <div class="showtimes">
-                    {% for time in schedule.showtimes %}
-                        <button class="time-button">{{ time }}</button>
-                    {% endfor %}
+        {% if schedules %}
+            {% for schedule in schedules %}
+                <div class="cinema">
+                    <h2>{{ schedule.cinema_name }}</h2>
+                    <div class="cinema-info">
+                        <p><i>📍</i> {{ schedule.address }}</p>
+                        <p><i>🚇</i> {{ schedule.metro }}</p>
+                    </div>
+                    <div class="showtimes">
+                        {% for time in schedule.showtimes %}
+                            <button class="time-button"
+                                    data-cinema="{{ schedule.cinema_name }}"
+                                    data-time="{{ time }}">
+                                {{ time }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-schedule">Расписание не найдено.</p>
+        {% endif %}
+
+        <!-- Модальное окно -->
+        <div class="modal" id="bookingModal">
+            <div class="modal-content">
+                <h2>Выберите места</h2>
+                <div class="seat-map" id="seatMap">
+                    <!-- Места будут добавлены через JavaScript -->
+                </div>
+                <div class="modal-actions">
+                    <button onclick="confirmBooking()" class="time-button">Подтвердить</button>
+                    <button onclick="closeModal()" class="time-button">Отмена</button>
                 </div>
             </div>
-        {% endfor %}
-    {% else %}
-        <p>Расписание не найдено.</p>
-    {% endif %}
+        </div>
+
+        <div class="footer">
+            <p>Обновлено: {% now "j F Y H:i" %}</p>
+        </div>
+    </div>
+
+    <script>
+        // Генерация карты мест
+        function generateSeats() {
+            const seatMap = document.getElementById('seatMap');
+            seatMap.innerHTML = '';
+
+            for(let i = 1; i <=96; i++) {
+                const seat = document.createElement('div');
+                seat.className = 'seat';
+                seat.textContent = i;
+                seat.onclick = function() {
+                    this.classList.toggle('selected');
+                };
+                seatMap.appendChild(seat);
+            }
+        }
+
+        // Открытие модального окна
+        document.querySelectorAll('.time-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                document.getElementById('bookingModal').style.display = 'block';
+                generateSeats();
+            });
+        });
+
+        // Закрытие модального окна
+        function closeModal() {
+            document.getElementById('bookingModal').style.display = 'none';
+        }
+
+        // Подтверждение бронирования
+        function confirmBooking() {
+            const selectedSeats = Array.from(document.querySelectorAll('.seat.selected'))
+                .map(seat => seat.textContent);
+
+            if(selectedSeats.length === 0) {
+                alert('Выберите хотя бы одно место!');
+                return;
+            }
+
+            alert(`Вы выбрали места: ${selectedSeats.join(', ')}`);
+            closeModal();
+        }
+
+        // Закрытие по клику вне окна
+        window.onclick = function(event) {
+            if(event.target.classList.contains('modal')) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>
