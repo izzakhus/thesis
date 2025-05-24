@@ -37,3 +37,5 @@ class MovieFrameInline(admin.TabularInline):
     extra = 3
 
 
+
+
