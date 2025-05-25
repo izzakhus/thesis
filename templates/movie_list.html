@@ -44,7 +44,6 @@
     </style>
 </head>
 <body>
-    <!-- Навигационная панель -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="#">
@@ -54,9 +53,6 @@
                 <span class="me-3 text-secondary">
                     <i class="bi bi-geo-alt-fill me-1"></i>Алматы
                 </span>
-                <a href="#" class="me-3 text-dark text-decoration-none">
-                    <i class="bi bi-ticket-perforated me-1"></i>Мои билеты
-                </a>
                 <a href="{% url 'profile' %}" class="btn btn-outline-dark">
                     <i class="bi bi-person-circle me-1"></i>Профиль
                 </a>
@@ -64,11 +60,9 @@
         </div>
     </nav>
 
-    <!-- Основной контент -->
     <div class="container py-5">
-        <!-- Заголовок и фильтры -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold mb-0">Сейчас в кинотеатрах Алматы</h2>
+            <h2 class="fw-bold mb-0">Сейчас в кинотеатрах</h2>
             <div class="d-flex">
                 <div class="input-group me-3" style="max-width: 300px;">
                     <input type="text" class="form-control" placeholder="Поиск фильма">
@@ -89,7 +83,7 @@
             </div>
         </div>
 
-        <!-- Выбор даты -->
+
         <div class="date-scroll mb-4">
             {% for day in days %}
                 <button class="btn {% if day.selected %}bg-dark text-white{% else %}bg-light{% endif %}
@@ -100,7 +94,7 @@
             {% endfor %}
         </div>
 
-        <!-- Карточки фильмов -->
+
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             {% for movie in movies %}
             <div class="col">
@@ -108,7 +102,7 @@
                     <div class="position-relative">
                         <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}" style="height: 400px; object-fit: cover;">
                         <div class="position-absolute top-0 end-0 age-badge m-2 px-2 rounded-pill">
-                            {{ movie.age_rating }}+
+                            {{ movie.age_rating }}
                         </div>
                     </div>
                     <div class="card-body">

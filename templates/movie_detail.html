@@ -85,20 +85,7 @@
             scroll-snap-align: start;
         }
 
-        .actor-card {
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            transition: transform 0.3s;
-        }
 
-        .actor-card:hover {
-            transform: translateY(-5px);
-        }
-
-                .quick-fact-label {
-            color: #ffffff !important;
-            font-size: 0.9rem;
-        }
         .quick-fact-value {
             color: #ffffff !important;
             font-size: 1.2rem;
@@ -177,10 +164,8 @@
             </div>
         </div>
 
-<div class="container py-5">
-<div class="gallery-scroll">
-</div>
 
+<div class="container py-5">
     <h3 class="section-title">О фильме</h3>
     <div class="row g-4">
         <div class="col-md-6">
@@ -196,8 +181,26 @@
             </div>
         </div>
     </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+ {% if other_movies %}
+            <div class="mt-5">
+                <h3 class="text-center mb-4">Другие фильмы</h3>
+                <div class="row">
+                    {% for other_movie in other_movies %}
+                        <div class="col-md-4 mb-4">
+                            <a href="/movie/{{ other_movie.id }}/" class="text-decoration-none text-light">
+                                <div class="card bg-secondary text-white h-100 shadow-sm border-0">
+                                    {% if other_movie.poster %}
+                                        <img src="{{ other_movie.poster.url }}" class="card-img-top" style="height: 500px; object-fit: cover;" alt="{{ other_movie.title }}">
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h5 class="card-title text-center">{{ other_movie.title }}</h5>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
 </body>
 </html>

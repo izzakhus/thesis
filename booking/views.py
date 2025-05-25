@@ -90,31 +90,5 @@ def movie_schedule(request, movie_id):
     })
 
 
-# views.py
-@require_http_methods(["POST"])
-def book_seats(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({'status': 'error', 'message': 'Требуется авторизация'})
-
-    try:
-        data = json.loads(request.body)
-        seats = Seat.objects.filter(id__in=data['seats'], is_reserved=False)
-
-        with transaction.atomic():
-            for seat in seats:
-                seat.is_reserved = True
-                seat.save()
-                Booking.objects.create(
-                    user=request.user,
-                    seat=seat,
-                    session=seat.session
-                )
-
-        return JsonResponse({'status': 'success'})
-
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)})
-
-
 def profile(request):
     return render(request, 'profile.html')
